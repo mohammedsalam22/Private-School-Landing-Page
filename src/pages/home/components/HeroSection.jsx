@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Box, Container, Typography, Button } from "@mui/material";
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 const textVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -28,6 +29,7 @@ const AnimatedText = ({ text }) => (
 
 const HeroSection = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const texts = [
     t('welcomeText'),
     t('inspiringLeaders'),
@@ -108,7 +110,12 @@ const HeroSection = () => {
         </Typography>
 
         <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
-          <Button variant="contained" size="large" sx={{ px: 4, py: 1.5, fontSize: '1.1rem' }}>
+          <Button 
+            variant="contained" 
+            size="large" 
+            sx={{ px: 4, py: 1.5, fontSize: '1.1rem' }}
+            onClick={() => navigate('/placement-test')}
+          >
             {t('bookTest')}
           </Button>
           <Button
@@ -125,6 +132,7 @@ const HeroSection = () => {
                 backgroundColor: 'rgba(255, 255, 255, 0.1)',
               }
             }}
+            onClick={() => navigate('/schedule-visit')}
           >
             {t('scheduleVisit')}
           </Button>

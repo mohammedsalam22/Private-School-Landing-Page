@@ -37,7 +37,6 @@ i18n
         supportedLngs: Object.keys(LANGUAGES),
     })
     .then(() => {
-        // Set initial direction based on language
         const language = LANGUAGES[i18n.language];
         if (language) {
             document.documentElement.dir = language.direction;
@@ -58,7 +57,7 @@ i18n.on('languageChanged', (lng) => {
 });
 
 export const changeLanguage = (languageCode) => {
-    i18n.changeLanguage(languageCode); // Let i18next handle the change
+    i18n.changeLanguage(languageCode); 
 };
 
 export default i18n;

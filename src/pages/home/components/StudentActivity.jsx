@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Container,
@@ -9,9 +9,13 @@ import {
   Button,
   useTheme,
   Chip,
+  CircularProgress,
+  Alert,
 } from "@mui/material";
 import { useTranslation } from 'react-i18next';
-import { mockStudentActivitiesData } from '../../../mocks/mockStudentActivities'; // Import the mock data
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchActivities } from '../../../featuers/activitiesSlice/activitiesSlice';
+import activitiesApi from '../../../api/activitiesApi';
 
 // Animation variants
 const cardVariants = {
@@ -28,8 +32,13 @@ const StudentActivities = () => {
   const { t } = useTranslation();
   const theme = useTheme();
   const [hoveredCard, setHoveredCard] = useState(null);
+  const dispatch = useDispatch();
+  
+  const { activities, loading, error } = useSelector((state) => state.activities);
 
-  const activitiesData = mockStudentActivitiesData; // Use mock data
+  useEffect(() => {
+    dispatch(fetchActivities());
+  }, [dispatch]);
 
   const getCategoryColor = (category) => {
     const colors = {
@@ -67,200 +76,181 @@ const StudentActivities = () => {
           </Typography>
         </Box>
 
+        {/* Loading State */}
+        {loading && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+            <CircularProgress />
+          </Box>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+            <Alert severity="error" sx={{ maxWidth: 600 }}>
+              {error}
+            </Alert>
+          </Box>
+        )}
+
         {/* Activities List */}
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {activitiesData.map((activity, index) => (
-            <motion.div
-              key={activity.titleKey}
-              variants={cardVariants}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, margin: "-100px" }}
-              transition={{ delay: index * 0.1, duration: 0.6 }}
-            >
-              <Box
-                sx={{
-                  display: 'flex',
-                  flexDirection: { xs: 'column', md: index % 2 === 0 ? 'row' : 'row-reverse' },
-                  alignItems: 'center',
-                  gap: 4,
-                  mb: 4
-                }}
-                onMouseEnter={() => setHoveredCard(index)}
-                onMouseLeave={() => setHoveredCard(null)}
+        {!loading && !error && (
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        {activities.map((activity, index) => (
+              <motion.div
+                key={activity.id}
+                variants={cardVariants}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ delay: index * 0.1, duration: 0.6 }}
               >
-                {/* Image Section */}
-                <motion.div
-                  variants={imageVariants}
-                  transition={{ delay: (index * 0.1) + 0.2, duration: 0.6 }}
-                  style={{ flex: '0 0 45%' }}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: { xs: 'column', md: index % 2 === 0 ? 'row' : 'row-reverse' },
+                    alignItems: 'center',
+                    gap: 4,
+                    mb: 4
+                  }}
+                  onMouseEnter={() => setHoveredCard(index)}
+                  onMouseLeave={() => setHoveredCard(null)}
                 >
-                  <Box
-                    sx={{
-                      position: 'relative',
-                      width: '100%',
-                      height: { xs: 250, md: 320 },
-                      borderRadius: 3,
-                      overflow: 'hidden',
-                      boxShadow: hoveredCard === index ? 6 : 3,
-                      transition: 'all 0.3s ease',
-                      transform: hoveredCard === index ? 'scale(1.02)' : 'scale(1)',
-                    }}
+                  {/* Image Section */}
+                  <motion.div
+                    variants={imageVariants}
+                    transition={{ delay: (index * 0.1) + 0.2, duration: 0.6 }}
+                    style={{ flex: '0 0 45%' }}
                   >
-                    <img
-                      src={activity.image}
-                      alt={t(activity.titleKey)} // Use translation for alt text
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                        transition: 'transform 0.3s ease',
-                        transform: hoveredCard === index ? 'scale(1.05)' : 'scale(1)',
-                      }}
-                    />
                     <Box
                       sx={{
-                        position: 'absolute',
-                        top: 16,
-                        left: 16,
+                        position: 'relative',
+                        width: '100%',
+                        height: { xs: 250, md: 320 },
+                        borderRadius: 3,
+                        overflow: 'hidden',
+                        boxShadow: hoveredCard === index ? 6 : 3,
+                        transition: 'all 0.3s ease',
+                        transform: hoveredCard === index ? 'scale(1.02)' : 'scale(1)',
                       }}
                     >
-                      <Chip
-                        label={t(activity.category)} // Translate the category if needed
-                        sx={{
-                          backgroundColor: getCategoryColor(activity.category),
-                          color: 'white',
-                          fontWeight: 'bold',
-                          fontSize: '0.8rem',
+                      <img
+                        src={activitiesApi.getImageUrl(activity.image)}
+                        alt={activity.title}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          transition: 'transform 0.3s ease',
+                          transform: hoveredCard === index ? 'scale(1.05)' : 'scale(1)',
                         }}
                       />
-                    </Box>
-                  </Box>
-                </motion.div>
-
-                {/* Content Section */}
-                <Box sx={{ flex: 1 }}>
-                  <Card
-                    elevation={hoveredCard === index ? 8 : 2}
-                    sx={{
-                      p: 4,
-                      height: { xs: 'auto' },
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'center',
-                      backgroundColor: theme.palette.background.paper,
-                      transition: 'all 0.3s ease',
-                      transform: hoveredCard === index ? 'translateY(-5px)' : 'translateY(0)',
-                      border: hoveredCard === index ? `2px solid ${theme.palette.primary.main}` : 'none',
-                    }}
-                  >
-                    <CardContent sx={{ p: 0 }}>
-                      {/* Date */}
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          color: theme.palette.primary.main,
-                          fontWeight: 'medium',
-                          mb: 1,
-                          textTransform: 'uppercase',
-                          letterSpacing: 1,
-                        }}
-                      >
-                        {activity.date}
-                      </Typography>
-
-                      {/* Title */}
-                      <Typography
-                        variant="h4"
-                        component="h3"
-                        sx={{
-                          fontWeight: 'bold',
-                          mb: 2,
-                          color: theme.palette.text.primary,
-                          fontSize: { xs: '1.5rem', md: '2rem' },
-                        }}
-                      >
-                        {t(activity.titleKey)} {/* Use title translation key */}
-                      </Typography>
-
-                      {/* Description */}
-                      <Typography
-                        variant="body1"
-                        sx={{
-                          color: theme.palette.text.secondary,
-                          lineHeight: 1.7,
-                          mb: 3,
-                          fontSize: '1.1rem',
-                        }}
-                      >
-                        {t(activity.descriptionKey)} {/* Use description translation key */}
-                      </Typography>
-
-                      {/* Stats */}
                       <Box
                         sx={{
-                          display: 'flex',
-                          gap: 3,
-                          mb: 3,
-                          flexWrap: 'wrap',
+                          position: 'absolute',
+                          top: 16,
+                          left: 16,
                         }}
                       >
-                        <Box>
-                          <Typography
-                            variant="body2"
-                            sx={{ color: theme.palette.text.secondary, mb: 0.5 }}
-                          >
-                            Participants
-                          </Typography>
-                          <Typography
-                            variant="h6"
-                            sx={{ color: theme.palette.text.primary, fontWeight: 'bold' }}
-                          >
-                            {activity.participants}
-                          </Typography>
-                        </Box>
-                        <Box>
-                          <Typography
-                            variant="body2"
-                            sx={{ color: theme.palette.text.secondary, mb: 0.5 }}
-                          >
-                            Achievement
-                          </Typography>
-                          <Typography
-                            variant="h6"
-                            sx={{ color: theme.palette.primary.main, fontWeight: 'bold' }}
-                          >
-                            {t(activity.achievementKey)} {/* Use achievement translation key */}
-                          </Typography>
-                        </Box>
+                        <Chip
+                          label="Activity"
+                          sx={{
+                            backgroundColor: getCategoryColor("STEM"),
+                            color: 'white',
+                            fontWeight: 'bold',
+                            fontSize: '0.8rem',
+                          }}
+                        />
                       </Box>
+                    </Box>
+                  </motion.div>
 
-                      {/* Learn More Button */}
-                      <Button
-                        variant="contained"
-                        sx={{
-                          px: 3,
-                          py: 1,
-                          fontWeight: 'medium',
-                          textTransform: 'none',
-                          borderRadius: 2,
-                          backgroundColor: theme.palette.primary.main,
-                          '&:hover': {
-                            backgroundColor: theme.palette.primary.dark,
-                            transform: 'translateY(-2px)',
-                          },
-                          transition: 'all 0.2s ease',
-                        }}
-                      >
-                        {t('learnMore')} {/* Add key for translation */}
-                      </Button>
-                    </CardContent>
-                  </Card>
+                  {/* Content Section */}
+                  <Box sx={{ flex: 1 }}>
+                    <Card
+                      elevation={hoveredCard === index ? 8 : 2}
+                      sx={{
+                        p: 4,
+                        height: { xs: 'auto' },
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'center',
+                        backgroundColor: theme.palette.background.paper,
+                        transition: 'all 0.3s ease',
+                        transform: hoveredCard === index ? 'translateY(-5px)' : 'translateY(0)',
+                        border: hoveredCard === index ? `2px solid ${theme.palette.primary.main}` : 'none',
+                      }}
+                    >
+                      <CardContent sx={{ p: 0 }}>
+                        {/* Title */}
+                        <Typography
+                          variant="h4"
+                          component="h3"
+                          sx={{
+                            fontWeight: 'bold',
+                            mb: 2,
+                            color: theme.palette.text.primary,
+                            fontSize: { xs: '1.5rem', md: '2rem' },
+                          }}
+                        >
+                          {activity.title}
+                        </Typography>
+
+                        {/* Description */}
+                        <Typography
+                          variant="body1"
+                          sx={{
+                            color: theme.palette.text.secondary,
+                            lineHeight: 1.7,
+                            mb: 3,
+                            fontSize: '1.1rem',
+                          }}
+                        >
+                          {activity.description}
+                        </Typography>
+
+                        {/* Details (if available) */}
+                        {activity.details && (
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              color: theme.palette.text.secondary,
+                              lineHeight: 1.6,
+                              mb: 3,
+                              fontSize: '1rem',
+                              fontStyle: 'italic',
+                            }}
+                          >
+                            {activity.details}
+                          </Typography>
+                        )}
+
+                        {/* Learn More Button */}
+                        <Button
+                          variant="contained"
+                          sx={{
+                            px: 3,
+                            py: 1,
+                            fontWeight: 'medium',
+                            textTransform: 'none',
+                            borderRadius: 2,
+                            backgroundColor: theme.palette.primary.main,
+                            '&:hover': {
+                              backgroundColor: theme.palette.primary.dark,
+                              transform: 'translateY(-2px)',
+                            },
+                            transition: 'all 0.2s ease',
+                          }}
+                        >
+                          {t('learnMore')}
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </Box>
                 </Box>
-              </Box>
-            </motion.div>
-          ))}
-        </Box>
+              </motion.div>
+            ))}
+          </Box>
+        )}
 
         {/* View All Activities Button */}
         <Box sx={{ textAlign: 'center', mt: 8 }}>
